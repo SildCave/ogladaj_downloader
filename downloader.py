@@ -67,6 +67,9 @@ for i in range(1, odcinki + 1):
 
 
 for thread in threads:
-    thread.join()
-
+    try:
+        thread.join()
+    except:
+        pass
+    
 print('Done')
