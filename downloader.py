@@ -3,6 +3,7 @@ import bs4
 import json
 import os
 import time
+from urllib.parse import unquote
 import threading
 import PySimpleGUI as psg
 
@@ -42,6 +43,13 @@ dir_name = os.path.dirname(os.path.realpath(__file__)) + '/' + dir_name
 if not os.path.exists(dir_name):
     os.mkdir(dir_name)
 
+if not os.path.exists((os.path.realpath(__file__)) + '/' + 'Cookie.txt'):
+    print('Cookie.txt not found')
+    exit()
+
+with open(os.path.dirname(os.path.realpath(__file__)) + '/' + 'Cookie.txt', 'r') as f:
+    cookie = f.read()
+
 for i in range(1, odcinki + 1):
     r = requests.get(url + str(i), headers={'User-Agent': 'Mozilla/5.0'})
     soup = bs4.BeautifulSoup(r.text, 'html.parser')
@@ -51,10 +59,12 @@ for i in range(1, odcinki + 1):
     r = requests.post('https://ogladajanime.pl/command_manager.php?action=get_player_list', data={'id': id}, headers={
         'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/110.0",
         'Referer': url + str(i),
-        })
+        'Cookie': cookie
+    })
 
     j = json.loads(((r.json()['data'])))
-    video_url = f"https://www.cda.pl/video/{(j['url'].split('/')[-1])}"
+    
+    video_url = f"https://www.cda.pl/video/{(unquote(j['url']).split('/')[-1])}"
     print(video_url)
 
     while threading.active_count() >= MAX_THREADS:
@@ -62,8 +72,9 @@ for i in range(1, odcinki + 1):
         pass
 
 
-    t = threading.Thread(target=os.system, args=(f"yt-dlp -o \"{dir_name}/{str(i).zfill(3)}.%(ext)s\" {video_url}",)).start()
+    t = threading.Thread(target=os.system, args=(f"yt-dlp -o \"{dir_name}/Ep {str(i).zfill(3)}.%(ext)s\" {video_url}",)).start()
     threads.append(t)
+    time.sleep(6)
 
 
 for thread in threads:
@@ -73,3 +84,6 @@ for thread in threads:
         pass
     
 print('Done')
+
+
+
